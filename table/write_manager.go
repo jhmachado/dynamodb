@@ -8,6 +8,7 @@ import (
 	ddb "github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/jhmachado/dynamodb"
+	"github.com/jhmachado/dynamodb/client"
 	"github.com/jhmachado/dynamodb/util"
 	"reflect"
 	"strconv"
@@ -209,7 +210,7 @@ func updateBatch(ctx context.Context, stmts []PartiQLCommand, tableName string, 
 
 	report := &ExecutionReport{}
 
-	client, err := dynamodb.Client()
+	client, err := client.GetClient()
 	if err != nil {
 		report.Errors = append(report.Errors, err)
 		outCh <- report
@@ -336,7 +337,7 @@ func writeBatch(
 	report := &WriteReport{}
 	keyToItem := make(map[string]interface{})
 
-	client, err := dynamodb.Client()
+	client, err := client.GetClient()
 	if err != nil {
 		report.Errors = append(report.Errors, err)
 		outCh <- report
@@ -350,12 +351,12 @@ func writeBatch(
 			report.Errors = append(report.Errors, err)
 		}
 
-		key, err := util.GetPrimaryKeyFromAvMap(avs, ks)
+		key, err := GetPrimaryKeyFromAvMap(avs, ks)
 		if err != nil {
 			report.Errors = append(report.Errors, err)
 			continue
 		}
-		keyToItem[util.FormatPrimaryKey(key, nil)] = item
+		keyToItem[FormatPrimaryKey(key, nil)] = item
 
 		writeReqs = append(writeReqs, types.WriteRequest{
 			PutRequest: &types.PutRequest{Item: avs},
@@ -403,8 +404,8 @@ func writeBatch(
 	if len(writeReqs) > 0 {
 		for _, writeReq := range writeReqs {
 			avs := writeReq.PutRequest.Item
-			key, _ := util.GetPrimaryKeyFromAvMap(avs, ks)
-			item := keyToItem[util.FormatPrimaryKey(key, nil)]
+			key, _ := GetPrimaryKeyFromAvMap(avs, ks)
+			item := keyToItem[FormatPrimaryKey(key, nil)]
 			report.UnwrittenItems = append(report.UnwrittenItems, item)
 		}
 	}

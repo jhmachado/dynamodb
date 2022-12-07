@@ -3,7 +3,6 @@ package table
 import (
 	"context"
 	"github.com/jhmachado/dynamodb/logger"
-	"github.com/jhmachado/dynamodb/paginator"
 )
 
 const DefaultPageSize = 50
@@ -17,7 +16,6 @@ func init() {
 type Table struct {
 	TableName      string
 	IndexName      *string
-	PrimaryKey     PrimaryKey
 	KeySchema      KeySchema
 	EntityResolver EntityResolver
 }
@@ -37,8 +35,8 @@ func (t Table) CollectionName() string {
 	return t.TableName
 }
 
-func (t Table) Get(ctx context.Context, inputOptions InputOptions) (interface{}, error) {
-	return get(ctx, t, inputOptions)
+func (t Table) Get(ctx context.Context, primaryKey PrimaryKey, inputOptions InputOptions) (interface{}, error) {
+	return get(ctx, t, primaryKey, inputOptions)
 }
 
 func (t Table) Put(ctx context.Context, item interface{}, inputOptions InputOptions) error {
@@ -49,18 +47,18 @@ func (t Table) Query(ctx context.Context, partitionKey string, inputOptions Inpu
 	return query(ctx, t, partitionKey, inputOptions)
 }
 
-func (t Table) PaginatedQuery(partitionKey string, inputOptions InputOptions) (paginator.Paginator, error) {
+func (t Table) PaginatedQuery(partitionKey string, inputOptions InputOptions) (Paginator, error) {
 	return paginatedQuery(t, partitionKey, inputOptions)
 }
 
-func (t Table) Update(ctx context.Context, inputOptions InputOptions) error {
-	return updateItem(ctx, t, inputOptions)
+func (t Table) Update(ctx context.Context, primaryKey PrimaryKey, inputOptions InputOptions) error {
+	return updateItem(ctx, t, primaryKey, inputOptions)
 }
 
 func (t Table) Scan(ctx context.Context, inputOptions InputOptions) ([]interface{}, error) {
 	return scan(ctx, t, inputOptions)
 }
 
-func (t Table) PaginatedScan(inputOptions InputOptions) (paginator.Paginator, error) {
+func (t Table) PaginatedScan(inputOptions InputOptions) (Paginator, error) {
 	return paginatedScan(t, inputOptions)
 }

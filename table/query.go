@@ -7,13 +7,12 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
-	db "github.com/jhmachado/dynamodb"
-	"github.com/jhmachado/dynamodb/paginator"
+	db "github.com/jhmachado/dynamodb/client"
 	"github.com/jhmachado/dynamodb/util"
 )
 
 func query(ctx context.Context, table Table, partitionKey string, inputOptions InputOptions) ([]interface{}, error) {
-	client, err := db.Client()
+	client, err := db.GetClient()
 	if err != nil {
 		return nil, err
 	}
@@ -45,8 +44,8 @@ func query(ctx context.Context, table Table, partitionKey string, inputOptions I
 	return decoder.AttributeMapsToEntities(queryOutput.Items)
 }
 
-func paginatedQuery(table Table, partitionKey string, inputOptions InputOptions) (paginator.Paginator, error) {
-	client, err := db.Client()
+func paginatedQuery(table Table, partitionKey string, inputOptions InputOptions) (Paginator, error) {
+	client, err := db.GetClient()
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +60,7 @@ func paginatedQuery(table Table, partitionKey string, inputOptions InputOptions)
 		queryInput.Limit = &val
 	}
 
-	queryPaginator := paginator.NewQueryPaginator(
+	queryPaginator := NewQueryPaginator(
 		client.AWSClient,
 		table.EntityResolver,
 		table.KeySchema,

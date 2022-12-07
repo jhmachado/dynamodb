@@ -5,20 +5,20 @@ import (
 	"errors"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
-	db "github.com/jhmachado/dynamodb"
+	db "github.com/jhmachado/dynamodb/client"
 	"github.com/jhmachado/dynamodb/util"
 )
 
-func updateItem(ctx context.Context, table Table, inputOptions InputOptions) error {
-	client, err := db.Client()
+func updateItem(ctx context.Context, table Table, primaryKey PrimaryKey, inputOptions InputOptions) error {
+	client, err := db.GetClient()
 	if err != nil {
 		return err
 	}
 
-	formattedPk := util.FormatPrimaryKey(table.PrimaryKey, &table.KeySchema)
+	formattedPk := FormatPrimaryKey(primaryKey, &table.KeySchema)
 	log.Debugf("[%s] DynamoDB PATH with primary key, %s.", table.CollectionName(), formattedPk)
 
-	updateItemInput, err := buildUpdateItemInput(table, inputOptions)
+	updateItemInput, err := buildUpdateItemInput(table, primaryKey, inputOptions)
 	if err != nil {
 		return err
 	}
@@ -38,12 +38,12 @@ func updateItem(ctx context.Context, table Table, inputOptions InputOptions) err
 	return nil
 }
 
-func buildUpdateItemInput(table Table, inputOptions InputOptions) (*dynamodb.UpdateItemInput, error) {
+func buildUpdateItemInput(table Table, primaryKey PrimaryKey, inputOptions InputOptions) (*dynamodb.UpdateItemInput, error) {
 	updateItemInput := &dynamodb.UpdateItemInput{
 		TableName: &table.TableName,
 	}
 
-	avs, err := attributevalue.MarshalMap(table.PrimaryKey)
+	avs, err := attributevalue.MarshalMap(primaryKey)
 	if err != nil {
 		return nil, errors.New("failed to marshal primary key, " + err.Error())
 	}

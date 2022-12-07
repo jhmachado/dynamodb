@@ -1,19 +1,18 @@
-package paginator
+package table
 
 import (
 	"context"
 	"errors"
 	ddb "github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
-	"github.com/jhmachado/dynamodb"
-	"github.com/jhmachado/dynamodb/table"
+	"github.com/jhmachado/dynamodb/client"
 	"github.com/jhmachado/dynamodb/util"
 )
 
 type DynamoPaginator struct {
 	queryPaginator  *ddb.QueryPaginator
 	scanPaginator   *ddb.ScanPaginator
-	entitiesDecoder table.EntitiesDecoder
+	entitiesDecoder EntitiesDecoder
 	logOpts         []string
 }
 
@@ -26,12 +25,12 @@ func (p *DynamoPaginator) HasMorePages() bool {
 }
 
 func (p *DynamoPaginator) NextPage(ctx context.Context) ([]interface{}, error) {
-	client, err := dynamodb.Client()
+	clientWrapper, err := client.GetClient()
 	if err != nil {
 		return nil, err
 	}
 
-	dbCtx, cancel := util.BuildDBContext(ctx, client.TimeoutsMs)
+	dbCtx, cancel := util.BuildDBContext(ctx, clientWrapper.TimeoutsMs)
 	if cancel != nil {
 		defer cancel()
 	}
@@ -68,14 +67,14 @@ func (p DynamoPaginator) extractItems(dbCtx context.Context) ([]map[string]types
 
 func NewQueryPaginator(
 	client *ddb.Client,
-	resolver table.EntityResolver,
-	keySchema table.KeySchema,
+	resolver EntityResolver,
+	keySchema KeySchema,
 	opts *ddb.QueryInput,
 	logOpts []string,
 ) Paginator {
 	return &DynamoPaginator{
 		queryPaginator: ddb.NewQueryPaginator(client, opts),
-		entitiesDecoder: table.EntitiesDecoder{
+		entitiesDecoder: EntitiesDecoder{
 			EntityResolver: resolver,
 			KeySchema:      keySchema,
 		},
@@ -85,14 +84,14 @@ func NewQueryPaginator(
 
 func NewScanPaginator(
 	client *ddb.Client,
-	resolver table.EntityResolver,
-	keySchema table.KeySchema,
+	resolver EntityResolver,
+	keySchema KeySchema,
 	opts *ddb.ScanInput,
 	logOpts []string,
 ) Paginator {
 	return &DynamoPaginator{
 		scanPaginator: ddb.NewScanPaginator(client, opts),
-		entitiesDecoder: table.EntitiesDecoder{
+		entitiesDecoder: EntitiesDecoder{
 			EntityResolver: resolver,
 			KeySchema:      keySchema,
 		},

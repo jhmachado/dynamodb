@@ -6,20 +6,20 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
-	db "github.com/jhmachado/dynamodb"
+	db "github.com/jhmachado/dynamodb/client"
 	"github.com/jhmachado/dynamodb/util"
 	"reflect"
 )
 
-func get(ctx context.Context, table Table, inputOptions InputOptions) (interface{}, error) {
-	client, err := db.Client()
+func get(ctx context.Context, table Table, primaryKey PrimaryKey, inputOptions InputOptions) (interface{}, error) {
+	client, err := db.GetClient()
 	if err != nil {
 		return nil, err
 	}
 
-	log.Debugf("[%s] DynamoDB GET with primary key, %s", table.CollectionName(), util.FormatPrimaryKey(table.PrimaryKey, &table.KeySchema))
+	log.Debugf("[%s] DynamoDB GET with primary key, %s", table.CollectionName(), FormatPrimaryKey(primaryKey, &table.KeySchema))
 
-	getItemInput, err := buildGetItemInput(table, inputOptions)
+	getItemInput, err := buildGetItemInput(table, primaryKey, inputOptions)
 	if err != nil {
 		return nil, err
 	}
@@ -42,12 +42,12 @@ func get(ctx context.Context, table Table, inputOptions InputOptions) (interface
 		EntityResolver: table.EntityResolver,
 		KeySchema:      table.KeySchema,
 	}
-	entity, _ := decoder.ResolveZeroEntity(table.PrimaryKey)
+	entity, _ := decoder.ResolveZeroEntity(primaryKey)
 	log.Debugf("resolved entity type: %s", reflect.TypeOf(entity).String())
 
 	err = attributevalue.UnmarshalMap(output.Item, entity)
 	if err != nil {
-		logOptions := []string{table.CollectionName(), util.FormatPrimaryKey(table.PrimaryKey, &table.KeySchema)}
+		logOptions := []string{table.CollectionName(), FormatPrimaryKey(primaryKey, &table.KeySchema)}
 		message := util.FormatErrorMessage("failed to deserialize db item", logOptions)
 		return nil, errors.New(message)
 	}
@@ -55,8 +55,8 @@ func get(ctx context.Context, table Table, inputOptions InputOptions) (interface
 	return entity, nil
 }
 
-func buildGetItemInput(table Table, inputOptions InputOptions) (*dynamodb.GetItemInput, error) {
-	avs, err := attributevalue.MarshalMap(table.PrimaryKey)
+func buildGetItemInput(table Table, primaryKey PrimaryKey, inputOptions InputOptions) (*dynamodb.GetItemInput, error) {
+	avs, err := attributevalue.MarshalMap(primaryKey)
 	if err != nil {
 		return nil, errors.New("failed to marshal primary key")
 	}

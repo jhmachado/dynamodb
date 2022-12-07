@@ -22,6 +22,8 @@ const optTokenNameSubstitutions = "TokenNameSubstitutions"
 const projections = "Projections"
 const limit = "Limit"
 
+type InputOptionsFunc func(kvs map[string]interface{}) error
+
 type InputOptions map[string]interface{}
 
 func WithExpression(expressionType, expression string, tokenValues ...interface{}) InputOptionsFunc {

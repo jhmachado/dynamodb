@@ -6,12 +6,12 @@ import (
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
-	db "github.com/jhmachado/dynamodb"
+	db "github.com/jhmachado/dynamodb/client"
 	"github.com/jhmachado/dynamodb/util"
 )
 
 func put(ctx context.Context, table Table, item interface{}, inputOptions InputOptions) error {
-	client, err := db.Client()
+	client, err := db.GetClient()
 	if err != nil {
 		return err
 	}
@@ -21,9 +21,9 @@ func put(ctx context.Context, table Table, item interface{}, inputOptions InputO
 		return errors.New("failed to marshal item")
 	}
 
-	key, _ := util.GetPrimaryKeyFromAvMap(itemValues, table.KeySchema)
+	key, _ := GetPrimaryKeyFromAvMap(itemValues, table.KeySchema)
 	if key != nil {
-		log.Debugf("[%s] DynamoDB PUT with primay key, %s", table.CollectionName(), util.FormatPrimaryKey(key, &table.KeySchema))
+		log.Debugf("[%s] DynamoDB PUT with primay key, %s", table.CollectionName(), FormatPrimaryKey(key, &table.KeySchema))
 	}
 
 	putItemInput, err := buildPutInput(table, itemValues, inputOptions)

@@ -5,13 +5,12 @@ import (
 	"errors"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
-	db "github.com/jhmachado/dynamodb"
-	"github.com/jhmachado/dynamodb/paginator"
+	db "github.com/jhmachado/dynamodb/client"
 	"github.com/jhmachado/dynamodb/util"
 )
 
 func scan(ctx context.Context, table Table, inputOptions InputOptions) ([]interface{}, error) {
-	client, err := db.Client()
+	client, err := db.GetClient()
 	if err != nil {
 		return nil, err
 	}
@@ -47,8 +46,8 @@ func scan(ctx context.Context, table Table, inputOptions InputOptions) ([]interf
 	return decoder.AttributeMapsToEntities(scanOutput.Items)
 }
 
-func paginatedScan(table Table, inputOptions InputOptions) (paginator.Paginator, error) {
-	client, err := db.Client()
+func paginatedScan(table Table, inputOptions InputOptions) (Paginator, error) {
+	client, err := db.GetClient()
 	if err != nil {
 		return nil, err
 	}
@@ -63,7 +62,7 @@ func paginatedScan(table Table, inputOptions InputOptions) (paginator.Paginator,
 		scanInput.Limit = &val
 	}
 
-	scanPaginator := paginator.NewScanPaginator(
+	scanPaginator := NewScanPaginator(
 		client.AWSClient,
 		table.EntityResolver,
 		table.KeySchema,
